@@ -1,23 +1,21 @@
-import { useEffect, useState } from "react";
-
+import { useEffect } from "react";
 import axios from "axios";
-
+import { Route, Routes } from "react-router-dom";
+import CreatePrescriptionPage from "./pages/CreatePrescriptionPage";
+import HomePage from "./pages/HomePage";
 function App() {
-  const [message, setMessage] = useState("");
-
   useEffect(() => {
     axios
       .get("http://localhost:5000/")
-
-      .then((response) => setMessage(response.data))
 
       .catch((error) => console.error(error));
   }, []);
   return (
     <div>
-      <h1>Docsys</h1>
-
-      <p>{message}</p>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/create" element={<CreatePrescriptionPage />} />
+      </Routes>
     </div>
   );
 }
