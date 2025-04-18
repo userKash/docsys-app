@@ -3,6 +3,7 @@ import axios from "axios";
 import { Route, Routes } from "react-router-dom";
 import CreatePrescriptionPage from "./pages/CreatePrescriptionPage";
 import HomePage from "./pages/HomePage";
+
 function App() {
   useEffect(() => {
     axios
