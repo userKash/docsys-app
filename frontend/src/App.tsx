@@ -3,6 +3,8 @@ import axios from "axios";
 import { Route, Routes } from "react-router-dom";
 import CreatePrescriptionPage from "./pages/CreatePrescriptionPage";
 import HomePage from "./pages/HomePage";
+import LoginPage from "./pages/LoginPage";
+import { UserProvider } from "./contexts/UserContext"; 
 
 function App() {
   useEffect(() => {
@@ -13,10 +15,13 @@ function App() {
   }, []);
   return (
     <div>
+      <UserProvider>
       <Routes>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/home" element={<HomePage />} />
         <Route path="/create" element={<CreatePrescriptionPage />} />
       </Routes>
+      </UserProvider>
     </div>
   );
 }

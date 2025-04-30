@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect  } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-
+import { useUser } from "../contexts/UserContext";
 // icons
 import dashboard from "../assets/icons/dashboard.svg";
 import prescription from "../assets/icons/prescriptions.svg";
@@ -14,6 +14,7 @@ import recent from "../assets/icons/recent-prescriptions.svg";
 import logo from "../assets/ignatius-logo.svg";
 import blank from "../assets/blank-prescription.svg";
 import template from "../assets/template-prescription.svg";
+
 
 const PrescriptionModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [step, setStep] = useState(0);
@@ -233,7 +234,42 @@ const Navbar: React.FC = () => {
   );
 };
 
+const formatName = (fullName: string) => {
+  if (!fullName) return "";
+
+  const parts = fullName.trim().split(/\s+/); // Split by spaces
+  const filteredParts: string[] = [];
+
+  parts.forEach((part, index) => {
+    const cleanPart = part.replace(/[^a-zA-Z]/g, ""); // Remove dots, commas, etc.
+    if (index === 0) {
+      filteredParts.push(part); // Always keep first name
+    } else if (cleanPart.length > 1) {
+      filteredParts.push(part); // Keep only real words
+    }
+    // Skip if cleanPart is 1 letter (initials)
+  });
+
+  return filteredParts.join(" ");
+};
+
+
+
 const HomePage: React.FC = () => {
+  const { name } = useUser();
+  const [greeting, setGreeting] = useState<string>("Good Morning");
+
+  useEffect(() => {
+    const now = new Date();
+    const hour = now.getHours();
+
+    if (hour < 12) {
+      setGreeting("Good Morning");
+    } else if (hour >= 12 && hour < 18) {
+      setGreeting("Good Afternoon");
+    } else {
+      setGreeting("Good Evening");
+    }  }, []);
   const [showModal, setShowModal] = useState(false);
   const dummyPrescriptions = [
     {
@@ -272,9 +308,9 @@ const HomePage: React.FC = () => {
         <div className="flex justify-between">
           <div className="w-[100%]">
             <div className="mb-5">
-              <h1 className="text-2xl font-medium mb-1 text-[#0077B6]">
-                Good Morning, Dr. Doe!
-              </h1>
+            <h1 className="text-2xl font-medium mb-1 text-[#0077B6]">
+              {greeting}, Dr. {formatName(name) || "User"}!
+            </h1>
               <p className="text-gray-500">Have a great and productive day</p>
             </div>
 
