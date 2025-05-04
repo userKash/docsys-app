@@ -106,9 +106,7 @@ const CreatePrescriptionPage: React.FC = () => {
     { name: "Omeprazole", dosage: "20mg", description: "Stomach Acid Reducer" },
   ];
 
-  function handleAddMedicine(
-    event: React.MouseEvent<HTMLImageElement, MouseEvent>
-  ): void {
+  function handleAddMedicine(): void {
     setShowModal(true);
   }
 
