@@ -16,12 +16,11 @@ const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const { setName } = useUser();
 
-  
   const handleLogout = async () => {
-    await signOut(auth); 
-    setName(""); 
-    localStorage.removeItem("userName"); 
-    navigate("/"); 
+    await signOut(auth);
+    setName("");
+    localStorage.removeItem("userName");
+    navigate("/");
   };
 
   return (
