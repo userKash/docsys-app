@@ -1,4 +1,7 @@
 import { useNavigate } from "react-router-dom";
+import { signOut } from "firebase/auth";
+import { auth } from "../../firebaseConfig";
+import { useUser } from "../../contexts/UserContext";
 
 // icons
 import dashboard from "../../assets/icons/dashboard.svg";
@@ -11,6 +14,15 @@ import logo from "../../assets/ignatius-logo.svg";
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
+  const { setName } = useUser();
+
+  
+  const handleLogout = async () => {
+    await signOut(auth); 
+    setName(""); 
+    localStorage.removeItem("userName"); 
+    navigate("/"); 
+  };
 
   return (
     <div className="w-64 h-screen text-[#404040] border fixed top-0 left-0 flex flex-col p-4 font-inter">
@@ -56,7 +68,7 @@ const Sidebar: React.FC = () => {
           Settings
         </button>
         <button
-          onClick={() => navigate("")}
+          onClick={handleLogout}
           className="flex gap-2 items-center font-medium text-[#FF4564] p-1 rounded w-full text-left"
         >
           <img src={logout} alt="" />
