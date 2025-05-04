@@ -1,209 +1,442 @@
 import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 
-// icons
-import dashboard from "../assets/icons/dashboard.svg";
-import prescription from "../assets/icons/prescriptions.svg";
-import settings from "../assets/icons/settings.svg";
-import help from "../assets/icons/help.svg";
 import add from "../assets/icons/add.svg";
-import write from "../assets/icons/write.svg";
+import Sidebar from "./components/Sidebar";
+import Navbar from "./components/Navbar";
+import rx from "../assets/icons/rx-icon.svg";
+const CreatePrescriptionPage: React.FC = () => {
+  const [medicines, setMedicines] = useState<
+    { name: string; dosage: string; frequency: number; quantity: number }[]
+  >([]);
+  const [step, setStep] = useState<"edit" | "confirm">("edit");
+  const [showModal, setShowModal] = useState(false);
+  const [selectedMedicines, setSelectedMedicines] = useState<string[]>([]);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const patient = location.state?.patient;
 
-// images
-import logo from "../assets/ignatius-logo.svg";
+  // New prescription data
+  const [newPrescription, setNewPrescription] = useState<{
+    patientName: string;
+    doctorName: string;
+    date: string;
+    symptoms: string;
+    subscription: string;
+    instructions: string;
+    inscription: {
+      name: string;
+      dosage: string;
+      frequency: number;
+      quantity: number;
+    }[];
+  }>({
+    patientName: "",
+    doctorName: "",
+    date: new Date().toLocaleDateString(),
+    symptoms: "",
+    subscription: "",
+    instructions: "",
+    inscription: [],
+  });
 
-const Sidebar: React.FC = () => (
-  <div className="w-64 h-screen text-[#404040] border fixed top-0 left-0 flex flex-col p-4 font-inter">
-    <img src={logo} className="w-40" />
-
-    <div className="flex mb-8 flex-col p-1 mt-10">
-      <h1 className="text-l font-bold">Dr. User</h1>
-      <div className="text-sm">Doctor</div>
-    </div>
-
-    <nav className="space-y-2">
-      <h2 className="font-semibold text-[#0077B6]">MAIN</h2>
-      <a
-        href=""
-        className="flex gap-2 items-center  font-medium hover:bg-gray-100 p-1 rounded block"
-      >
-        <img src={dashboard} alt="" />
-        Dashboard
-      </a>
-      <a
-        href="#"
-        className=" flex gap-2 items-center  font-medium hover:bg-gray-100 p-1 rounded block"
-      >
-        <img src={prescription} alt="" />
-        Prescriptions
-      </a>
-    </nav>
-
-    <nav className="space-y-2 mt-5">
-      <h2 className="font-semibold text-[#0077B6]">SUPPORT</h2>
-      <a
-        href="#"
-        className="flex gap-2 items-center  font-medium hover:bg-gray-100 p-1 rounded block "
-      >
-        <img src={help} alt="" />
-        Help Center
-      </a>
-      <a
-        href="#"
-        className="flex gap-2 items-center font-medium hover:bg-gray-100 p-1 rounded block"
-      >
-        <img src={settings} alt="" />
-        Settings
-      </a>
-    </nav>
-  </div>
-);
-
-const Navbar: React.FC = () => {
-  const [dateTime, setDateTime] = useState<string>("");
+  // Sync medicines to newPrescription.inscription
   useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      const options: Intl.DateTimeFormatOptions = {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      };
-      const formattedDate = now.toLocaleDateString(undefined, options);
+    setNewPrescription((prev) => ({
+      ...prev,
+      inscription: medicines,
+    }));
+  }, [medicines]);
 
-      let hours = now.getHours();
-      const minutes = now.getMinutes().toString().padStart(2, "0");
-      const ampm = hours >= 12 ? "PM" : "AM";
-      hours = hours % 12 || 12;
+  const handleGeneratePrescription = async () => {
+    if (!patient) return;
 
-      const formattedTime = `${hours}:${minutes} ${ampm}`;
-      setDateTime(`Date: ${formattedDate} Time: ${formattedTime}`);
+    const payload = {
+      name: patient.name,
+      age: patient.age,
+      gender: patient.gender,
+      dateOfPrescription: newPrescription.date,
+      inscription: newPrescription.inscription,
+      instructions: newPrescription.instructions,
+      doctorInformation: newPrescription.doctorName || "Dr. Mark Doe, MD",
     };
 
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
+    try {
+      const response = await fetch("http://localhost:5000/api/prescriptions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-  return (
-    <div className="fixed top-0 left-64 right-0 h-16 bg-white shadow flex items-center justify-between px-6 z-10">
-      <div className="text-sm text-gray-600 whitespace-nowrap">
-        Date:{" "}
-        <span className="font-semibold ">
-          {dateTime.split("Date: ")[1]?.split(" Time:")[0]}
-        </span>{" "}
-        Time:{" "}
-        <span className="font-semibold">{dateTime.split("Time: ")[1]}</span>
-      </div>
-    </div>
-  );
-};
+      const data = await response.json();
+      if (response.ok) {
+        await Swal.fire({
+          icon: "success",
+          title: "Prescription Created!",
+          text: "The prescription was successfully created.",
+          confirmButtonColor: "#0077B6",
+        });
+        navigate("/home");
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Creation Failed",
+          text: data.message,
+        });
+      }
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Something went wrong while creating the prescription.",
+      });
+    }
+  };
 
-const CreatePrescriptionPage: React.FC = () => {
+  const dummyMedicineDB = [
+    { name: "Paracetamol", dosage: "500mg", description: "Pain Reliever" },
+    { name: "Amoxicillin", dosage: "250mg", description: "Antibiotic" },
+    { name: "Ibuprofen", dosage: "400mg", description: "Anti-Inflammatory" },
+    { name: "Cetirizine", dosage: "10mg", description: "Allergy Relief" },
+    { name: "Loperamide", dosage: "2mg", description: "Treats Diarrhea" },
+    { name: "Metformin", dosage: "500mg", description: "Diabetes Management" },
+    { name: "Omeprazole", dosage: "20mg", description: "Stomach Acid Reducer" },
+  ];
+
+  function handleAddMedicine(
+    event: React.MouseEvent<HTMLImageElement, MouseEvent>
+  ): void {
+    setShowModal(true);
+  }
+
   return (
     <div className="min-h-screen font-inter">
       <Sidebar />
       <Navbar />
 
       <main className="ml-[300px] pt-28 justify-center h-full px-8">
-        <h2 className="text-lg font-semibold text-[#0077B6] mb-6">
-          Patient Details
-        </h2>
-
-        <div className="flex flex-col gap-4">
-          {/* Patient & Prescription Info */}
-          <div className="flex flex-wrap justify-between gap-8">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-gray-300 rounded-full"></div>
-              <div>
-                <div className="font-bold text-lg">John Foe</div>
-                <div className="text-sm">Age: 32</div>
-                <div className="text-sm">Gender: Male</div>
-              </div>
+        {step === "edit" && (
+          <>
+            <div className="flex items-center mb-6 gap-2">
+              <img src={rx} className="w-4" alt="" />
+              <h2 className="text-base font-semibold text-[#0077B6]">
+                Create Prescription
+              </h2>
             </div>
-            <div className="text-sm flex flex-col gap-1">
-              <div>
-                Prescription Date:{" "}
-                <span className="font-medium">January 20, 2025</span>
-              </div>
-              <div>
-                Prescription Type: <span className="font-medium">Common</span>
-              </div>
-            </div>
-          </div>
 
-          {/* Main Form Section */}
-          <div className="flex flex-wrap gap-4 mt-4">
-            {/* Left Form Inputs */}
-            <div className="flex flex-col flex-1 min-w-[280px] gap-4 bg-[#f9f9f9] p-4 rounded border">
-              <div>
-                <label className="font-semibold text-sm ">
-                  Symptoms/Diagnosis <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  placeholder="Diagnosis here"
-                  className="w-full mt-1 border rounded p-2 h-24 resize-none text-sm"
-                />
+            <div className="flex flex-col gap-4">
+              {/* Patient & Prescription Info */}
+              <div className="flex flex-wrap justify-between gap-8">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-gray-300 rounded-full"></div>
+                  <div>
+                    <div className="font-bold text-lg">{patient?.name}</div>
+                    <div className="text-sm">Age: {patient?.age}</div>
+                    <div className="text-sm">Gender: {patient?.gender}</div>
+                  </div>
+                </div>
+                <div className="text-sm flex flex-col gap-1">
+                  <div>
+                    Prescription Date:{" "}
+                    <span className="font-medium">January 20, 2025</span>
+                  </div>
+                  <div>
+                    Prescription Type:{" "}
+                    <span className="font-medium">Common</span>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="font-semibold text-sm">
-                  Subscription <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  className="w-full mt-1 border rounded p-2 text-sm"
-                />
-              </div>
-              <div>
-                <label className="font-semibold text-sm">
-                  Instructions <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  className="w-full mt-1 border rounded p-2 text-sm"
-                />
-              </div>
-              <button className="bg-[#0077B6] hover:bg-[#005f8f] text-white font-medium py-2 rounded text-sm mt-2">
+
+              {/* Main Form Section */}
+              <div className="flex flex-wrap gap-4 mt-4">
+                {/* Left Form Inputs */}
+                <div className="flex flex-col flex-1 min-w-[280px] gap-4 bg-[#f9f9f9] p-4 rounded border">
+                  <div>
+                    <label className="font-semibold text-sm ">
+                      Symptoms/Diagnosis <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      value={newPrescription.symptoms}
+                      onChange={(e) =>
+                        setNewPrescription({
+                          ...newPrescription,
+                          symptoms: e.target.value,
+                        })
+                      }
+                      placeholder="Diagnosis here"
+                      className="w-full mt-1 border rounded p-2 h-24 resize-none text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold text-sm">
+                      Subscription <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={newPrescription.subscription}
+                      onChange={(e) =>
+                        setNewPrescription({
+                          ...newPrescription,
+                          subscription: e.target.value,
+                        })
+                      }
+                      className="w-full mt-1 border rounded p-2 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold text-sm">
+                      Instructions <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      value={newPrescription.instructions}
+                      onChange={(e) =>
+                        setNewPrescription({
+                          ...newPrescription,
+                          instructions: e.target.value,
+                        })
+                      }
+                      type="text"
+                      className="w-full mt-1 border rounded p-2 text-sm"
+                    />
+                  </div>
+                  {/* <button
+                className="bg-[#0077B6] hover:bg-[#005f8f] text-white font-medium py-2 rounded text-sm mt-2"
+                onClick={handleGeneratePrescription}
+              >
                 Generate Prescription
+              </button> */}
+                </div>
+
+                {/* Inscription Section */}
+                {/* Inscription Section */}
+                <div className="bg-[#f9f9f9] p-4 rounded border w-full min-w-max flex-1">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-semibold">Inscription</h3>
+                    <button className="w-12 h-6 rounded-full border bg-white text-white text-sm flex items-center justify-center">
+                      <img src={add} onClick={handleAddMedicine} />
+                    </button>
+                  </div>
+
+                  <div className="text-sm">
+                    <div className="flex justify-between font-semibold border-b pb-1 mb-1">
+                      <span className="font-medium w-1/4">Drug Name</span>
+                      <span className="font-medium w-1/6">Dosage</span>
+                      <span className="font-medium w-1/6">Frequency</span>
+                      <span className="font-medium w-1/6">Quantity</span>
+                      <span className="font-medium w-1/6 text-center">
+                        Action
+                      </span>
+                    </div>
+
+                    {medicines.map((med, index) => (
+                      <div
+                        key={index}
+                        className="flex justify-between items-center mb-1"
+                      >
+                        <span className="w-1/4">{med.name}</span>
+                        <span className="w-1/6">{med.dosage}</span>
+
+                        <input
+                          type="number"
+                          className="w-1/6 px-2 bg-transparent border rounded"
+                          value={med.frequency}
+                          onChange={(e) => {
+                            const updated = [...medicines];
+                            updated[index].frequency =
+                              parseInt(e.target.value) || 0;
+                            setMedicines(updated);
+                          }}
+                        />
+
+                        <input
+                          type="number"
+                          className="w-1/6 px-2 bg-transparent border rounded"
+                          value={med.quantity}
+                          onChange={(e) => {
+                            const updated = [...medicines];
+                            updated[index].quantity =
+                              parseInt(e.target.value) || 0;
+                            setMedicines(updated);
+                          }}
+                        />
+
+                        <button
+                          onClick={() => {
+                            const updated = medicines.filter(
+                              (_, i) => i !== index
+                            );
+                            setMedicines(updated);
+                          }}
+                          className="w-1/6 text-red-500 hover:text-red-700 text-sm"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Doctor's Info */}
+                <div className="bg-[#f9f9f9] p-4 rounded border w-full max-w-[10rem] flex-1">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-semibold text-sm">
+                      Doctor's Information
+                    </h3>
+                  </div>
+                  <div className="text-sm">
+                    <div className="font-medium">Dr. Mark Doe, MD</div>
+                    <div className="text-gray-600">2025-01234502</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button
+              className="bg-[#0077B6] hover:bg-[#005f8f] text-white font-medium py-2 rounded text-sm mt-4"
+              onClick={() => {
+                setStep("confirm");
+              }}
+            >
+              Next: Confirm Details
+            </button>
+          </>
+        )}
+
+        {/* Step: CONFIRM */}
+        {step === "confirm" && (
+          <div className="bg-white rounded shadow p-8">
+            <h2 className="text-lg font-semibold mb-4 text-[#0077B6]">
+              Confirm Prescription
+            </h2>
+
+            <div className="text-sm space-y-3">
+              <p>
+                <strong>Patient:</strong> {patient?.name} (Age: {patient?.age})
+              </p>
+              <p>
+                <strong>Symptoms:</strong> {newPrescription.symptoms}
+              </p>
+              <p>
+                <strong>Instructions:</strong> {newPrescription.instructions}
+              </p>
+              <p>
+                <strong>Subscription:</strong> {newPrescription.subscription}
+              </p>
+
+              <h3 className="mt-4 font-semibold">Medicines:</h3>
+              <ul className="list-disc list-inside">
+                {medicines.map((med, index) => (
+                  <li key={index}>
+                    {med.name} - {med.dosage} - {med.frequency}x/day -{" "}
+                    {med.quantity} pcs
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="flex gap-4 mt-6">
+              <button
+                onClick={() => setStep("edit")}
+                className="bg-gray-300 px-4 py-2 rounded"
+              >
+                Go Back & Edit
+              </button>
+
+              <button
+                onClick={handleGeneratePrescription}
+                className="bg-[#0077B6] text-white px-4 py-2 rounded"
+              >
+                Confirm & Submit
               </button>
             </div>
+          </div>
+        )}
 
-            {/* Inscription Section */}
-            <div className="bg-[#f9f9f9] p-4 rounded border w-full max-w-md flex-1">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="font-semibold">Inscription</h3>
-                <button className="w-6 h-6 rounded-full border-[#000] text-white text-sm flex items-center justify-center">
-                  <img src={add} alt="" />
+        {showModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+            <div className="bg-white rounded shadow-lg p-6 max-w-2xl w-full">
+              <h2 className="text-lg font-semibold mb-4">Select Medicines</h2>
+              <div className="overflow-y-auto max-h-64">
+                <table className="w-full text-sm border">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="border px-2 py-1 text-left">Drug Name</th>
+                      <th className="border px-2 py-1 text-left">Dosage</th>
+                      <th className="border px-2 py-1 text-left">
+                        Description
+                      </th>
+                      <th className="border px-2 py-1 text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dummyMedicineDB.map((drug, index) => (
+                      <tr key={index}>
+                        <td className="border px-2 py-1">{drug.name}</td>
+                        <td className="border px-2 py-1">{drug.dosage}</td>
+                        <td className="border px-2 py-1">{drug.description}</td>
+                        <td className="border px-2 py-1 text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedMedicines.includes(drug.name)}
+                            onChange={() => {
+                              if (selectedMedicines.includes(drug.name)) {
+                                setSelectedMedicines(
+                                  selectedMedicines.filter(
+                                    (name) => name !== drug.name
+                                  )
+                                );
+                              } else {
+                                setSelectedMedicines([
+                                  ...selectedMedicines,
+                                  drug.name,
+                                ]);
+                              }
+                            }}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="mt-4 flex justify-end gap-2">
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="bg-gray-300 px-4 py-2 rounded"
+                >
+                  Cancel
                 </button>
-              </div>
-              <div className="text-sm">
-                <div className="flex justify-between font-semibold border-b pb-1 mb-1">
-                  <span className="font-medium">Drug Name</span>
-                  <span className="font-medium">Frequency</span>
-                  <span className="font-medium">Quantity</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Paracetamol</span>
-                  <span>x2</span>
-                  <span>3</span>
-                </div>
-              </div>
-            </div>
+                <button
+                  className="bg-blue-600 text-white px-4 py-2 rounded"
+                  onClick={() => {
+                    const selectedDetails = dummyMedicineDB
+                      .filter((med) => selectedMedicines.includes(med.name))
+                      .map((med) => ({
+                        name: med.name,
+                        dosage: med.dosage,
+                        frequency: 0,
+                        quantity: 0,
+                      }));
 
-            {/* Doctor's Info */}
-            <div className="bg-[#f9f9f9] p-4 rounded border w-full max-w-xs flex-1">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="font-semibold text-sm">Doctor's Information</h3>
-                <button className="w-5 h-5 rounded-full bg-gray-200 text-xs flex items-center justify-center">
-                  <img src={write} alt="" />
+                    // Prevent duplicates
+                    const uniqueNewMeds = selectedDetails.filter(
+                      (newMed) =>
+                        !medicines.some((med) => med.name === newMed.name)
+                    );
+
+                    setMedicines([...medicines, ...uniqueNewMeds]);
+                    setShowModal(false);
+                    setSelectedMedicines([]);
+                  }}
+                >
+                  Confirm Selection
                 </button>
-              </div>
-              <div className="text-sm">
-                <div className="font-medium">Dr. Mark Doe, MD</div>
-                <div className="text-gray-600">2025-01234502</div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </main>
     </div>
   );

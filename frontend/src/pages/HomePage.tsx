@@ -1,23 +1,27 @@
-import React, { useState, useEffect  } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUser } from "../contexts/UserContext";
+import { useNavigate } from "react-router-dom";
+
 // icons
-import dashboard from "../assets/icons/dashboard.svg";
-import prescription from "../assets/icons/prescriptions.svg";
-import settings from "../assets/icons/settings.svg";
-import help from "../assets/icons/help.svg";
 import redirect from "../assets/icons/redirect.svg";
 import link from "../assets/icons/link.svg";
 import hospitalIcon from "../assets/icons/hospital-icon.svg";
 import recent from "../assets/icons/recent-prescriptions.svg";
+import close from "../assets/icons/close.svg";
+
 // images
-import logo from "../assets/ignatius-logo.svg";
+
 import blank from "../assets/blank-prescription.svg";
 import template from "../assets/template-prescription.svg";
-
+import newPatient from "../assets/icons/new-patient.svg";
+import existingPatient from "../assets/icons/existing-patient.svg";
+import Sidebar from "./components/Sidebar";
+import Navbar from "./components/Navbar";
 
 const PrescriptionModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [step, setStep] = useState(0);
+  const navigate = useNavigate();
   const [patientType, setPatientType] = useState<"new" | "existing" | null>(
     null
   );
@@ -32,10 +36,19 @@ const PrescriptionModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSearchPatient = () => {
+  const handleWritePrescription = () => {
     // redirect to another page (simulate)
-    alert("Redirecting to patient details page...");
+    navigate("/create", { state: { patient: formData } });
     onClose();
+  };
+
+  const handleBack = () => {
+    if (step === 1) {
+      setStep(0);
+      setPatientType(null);
+    } else {
+      onClose();
+    }
   };
 
   return (
@@ -46,37 +59,41 @@ const PrescriptionModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.8, opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md w-[100%] font-inter"
+          className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md font-inter relative"
         >
-          <div className="mb-4 text-sm text-gray-600">
-            Step {step + 1} of 2
-            <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-              <div
-                className={`h-2 rounded-full ${
-                  step === 0 ? "w-1/2 bg-blue-400" : "w-full bg-blue-600"
-                }`}
-              ></div>
-            </div>
-          </div>
+          <img
+            src={close}
+            className="absolute top-4 right-4 cursor-pointer"
+            onClick={onClose}
+          />
 
           {step === 0 && (
             <div>
-              <h2 className="text-lg font-semibold mb-4">
-                Write a prescription for:
-              </h2>
+              <h2 className="text-lg font-semibold">Write a prescription</h2>
+              <span>
+                Are you writing for a new patient or the patient has an existing
+                record?
+              </span>
               <div className="flex gap-4">
-                <button
-                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                <div
+                  className="flex flex-col items-center mt-4 border-2 border-gray-300 py-4 px-8 rounded-lg cursor-pointer hover:border-[#003459] transition ease-in"
                   onClick={() => handlePatientType("new")}
                 >
-                  New Patient
-                </button>
-                <button
-                  className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                  <img src={newPatient} alt="" />
+                  <label htmlFor="new-patient" className="ml-2">
+                    New Patient
+                  </label>
+                </div>
+
+                <div
+                  className="flex flex-col items-center mt-4 border-2 border-gray-300 py-4 px-8  rounded-lg cursor-pointer hover:border-[#003459] transition ease-in"
                   onClick={() => handlePatientType("existing")}
                 >
-                  Existing Patient
-                </button>
+                  <img src={existingPatient} alt="" />
+                  <label htmlFor="new-patient" className="mt-3">
+                    Existing Patient
+                  </label>
+                </div>
               </div>
             </div>
           )}
@@ -86,33 +103,64 @@ const PrescriptionModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               <h2 className="text-lg font-semibold mb-4">
                 New Patient Details
               </h2>
+
               <input
                 type="text"
                 name="name"
+                required
                 placeholder="Name"
                 value={formData.name}
                 onChange={handleInputChange}
                 className="w-full mb-2 p-2 border rounded"
               />
               <input
-                type="text"
+                type="number"
                 name="age"
+                required
                 placeholder="Age"
                 value={formData.age}
                 onChange={handleInputChange}
                 className="w-full mb-2 p-2 border rounded"
               />
-              <input
-                type="text"
-                name="gender"
-                placeholder="Gender"
-                value={formData.gender}
-                onChange={handleInputChange}
-                className="w-full mb-4 p-2 border rounded"
-              />
-              <button className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
-                Write Prescription
-              </button>
+              <div className="w-full my-3">
+                <label className="mr-4 font-medium">Gender:</label>
+                <label className="mr-4">
+                  <input
+                    type="radio"
+                    name="gender"
+                    value="Male"
+                    checked={formData.gender === "Male"}
+                    onChange={handleInputChange}
+                    className="mr-1"
+                  />
+                  Male
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="gender"
+                    value="Female"
+                    checked={formData.gender === "Female"}
+                    onChange={handleInputChange}
+                    className="mr-1"
+                  />
+                  Female
+                </label>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  className="bg-[#00538D] text-white px-4 py-2 rounded hover:bg-[#00528de7] transition ease-in"
+                  onClick={handleWritePrescription}
+                >
+                  Write Prescription
+                </button>
+                <button
+                  className="border border-gray-400 text-[#00538D] px-4 py-2 rounded"
+                  onClick={handleBack}
+                >
+                  Go Back
+                </button>
+              </div>
             </div>
           )}
 
@@ -126,110 +174,24 @@ const PrescriptionModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 placeholder="Search by name or ID"
                 className="w-full mb-4 p-2 border rounded"
               />
-              <button
-                className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
-                onClick={handleSearchPatient}
-              >
-                Write Prescription
-              </button>
+              <div className="flex gap-2">
+                <button
+                  className="bg-[#00538D] text-white px-4 py-2 rounded hover:bg-[#00528de7] transition ease-in"
+                  onClick={handleWritePrescription}
+                >
+                  Write Prescription
+                </button>
+                <button
+                  className="border border-gray-400 text-[#00538D] px-4 py-2 rounded"
+                  onClick={handleBack}
+                >
+                  Go Back
+                </button>
+              </div>
             </div>
           )}
-
-          <button
-            className="mt-4 text-sm text-gray-500 hover:text-gray-700 underline"
-            onClick={onClose}
-          >
-            Cancel
-          </button>
         </motion.div>
       </AnimatePresence>
-    </div>
-  );
-};
-
-const Sidebar: React.FC = () => (
-  <div className="w-64 h-screen text-[#404040] border fixed top-0 left-0 flex flex-col p-4 font-inter">
-    <img src={logo} className="w-40" />
-
-    <div className="flex mb-8 flex-col p-1 mt-10">
-      <h1 className="text-l font-bold">Dr. User</h1>
-      <div className="text-sm">Doctor</div>
-    </div>
-
-    <nav className="space-y-2">
-      <h2 className="font-semibold text-[#0077B6]">MAIN</h2>
-      <a
-        href="#"
-        className="flex gap-2 items-center  font-medium hover:bg-gray-100 p-1 rounded block"
-      >
-        <img src={dashboard} alt="" />
-        Dashboard
-      </a>
-      <a
-        href="#"
-        className=" flex gap-2 items-center  font-medium hover:bg-gray-100 p-1 rounded block"
-      >
-        <img src={prescription} alt="" />
-        Prescriptions
-      </a>
-    </nav>
-
-    <nav className="space-y-2 mt-5">
-      <h2 className="font-semibold text-[#0077B6]">SUPPORT</h2>
-      <a
-        href="#"
-        className="flex gap-2 items-center  font-medium hover:bg-gray-100 p-1 rounded block "
-      >
-        <img src={help} alt="" />
-        Help Center
-      </a>
-      <a
-        href="#"
-        className="flex gap-2 items-center font-medium hover:bg-gray-100 p-1 rounded block"
-      >
-        <img src={settings} alt="" />
-        Settings
-      </a>
-    </nav>
-  </div>
-);
-
-const Navbar: React.FC = () => {
-  const [dateTime, setDateTime] = useState<string>("");
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      const options: Intl.DateTimeFormatOptions = {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      };
-      const formattedDate = now.toLocaleDateString(undefined, options);
-
-      let hours = now.getHours();
-      const minutes = now.getMinutes().toString().padStart(2, "0");
-      const ampm = hours >= 12 ? "PM" : "AM";
-      hours = hours % 12 || 12;
-
-      const formattedTime = `${hours}:${minutes} ${ampm}`;
-      setDateTime(`Date: ${formattedDate} Time: ${formattedTime}`);
-    };
-
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="fixed top-0 left-64 right-0 h-16 bg-white shadow flex items-center justify-between px-6 z-10">
-      <div className="text-sm text-gray-600 whitespace-nowrap">
-        Date:{" "}
-        <span className="font-semibold ">
-          {dateTime.split("Date: ")[1]?.split(" Time:")[0]}
-        </span>{" "}
-        Time:{" "}
-        <span className="font-semibold">{dateTime.split("Time: ")[1]}</span>
-      </div>
     </div>
   );
 };
@@ -253,12 +215,37 @@ const formatName = (fullName: string) => {
   return filteredParts.join(" ");
 };
 
-
+type Prescription = {
+  name: string;
+  dateOfPrescription: string;
+  doctorInformation: string;
+  instructions: string;
+};
 
 const HomePage: React.FC = () => {
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+
+  useEffect(() => {
+    const fetchPrescriptions = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/prescriptions");
+        const data = await res.json();
+        if (res.ok) {
+          setPrescriptions(data.data);
+        } else {
+          console.error("Fetch failed:", data.message);
+        }
+      } catch (err) {
+        console.error("Error fetching prescriptions:", err);
+      }
+    };
+
+    fetchPrescriptions();
+  }, []);
+
   const { name } = useUser();
   const [greeting, setGreeting] = useState<string>("Good Morning");
-
+  const navigate = useNavigate();
   useEffect(() => {
     const now = new Date();
     const hour = now.getHours();
@@ -269,34 +256,9 @@ const HomePage: React.FC = () => {
       setGreeting("Good Afternoon");
     } else {
       setGreeting("Good Evening");
-    }  }, []);
+    }
+  }, []);
   const [showModal, setShowModal] = useState(false);
-  const dummyPrescriptions = [
-    {
-      name: "John Doe",
-      date: "April 17, 2025",
-      type: "Antibiotic",
-      status: "Active",
-    },
-    {
-      name: "Jane Smith",
-      date: "April 15, 2025",
-      type: "Painkiller",
-      status: "Completed",
-    },
-    {
-      name: "Alice Johnson",
-      date: "April 10, 2025",
-      type: "Vitamin",
-      status: "Pending",
-    },
-    {
-      name: "Bob Brown",
-      date: "April 9, 2025",
-      type: "Antidepressant",
-      status: "Active",
-    },
-  ];
 
   return (
     <div className="min-h-screen font-inter">
@@ -308,9 +270,9 @@ const HomePage: React.FC = () => {
         <div className="flex justify-between">
           <div className="w-[100%]">
             <div className="mb-5">
-            <h1 className="text-2xl font-medium mb-1 text-[#0077B6]">
-              {greeting}, Dr. {formatName(name) || "User"}!
-            </h1>
+              <h1 className="text-2xl font-medium mb-1 text-[#0077B6]">
+                {greeting}, Dr. {formatName(name) || "User"}!
+              </h1>
               <p className="text-gray-500">Have a great and productive day</p>
             </div>
 
@@ -363,32 +325,35 @@ const HomePage: React.FC = () => {
                   Recent Prescriptions
                 </h1>
               </div>
-              <a className="flex gap-1 items-center mb-3 cursor-pointer">
+              <a
+                onClick={() => navigate("/prescriptions")}
+                className="flex gap-1 items-center mb-3 cursor-pointer"
+              >
                 <h1 className="text-sm font-medium text-[#1F4276]">View all</h1>
-                <img src={redirect} className="h-4" alt="" />
               </a>
             </div>
-            <table className="w-full mt-2 text-sm text-left border-collapse">
-              <thead className="border-b-2 border-[#D7D7D7]">
-                <tr className=" text-[#000000]">
-                  <th className="px-4 py-2 font-medium">Name</th>
-                  <th className="px-4 py-2 font-medium">
-                    Date of Prescription
-                  </th>
-                  <th className="px-4 py-2 font-medium">Prescription Type</th>
-                  <th className="px-4 py-2 font-medium">Status</th>
+            <table className="w-full text-sm border-collapse border">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="px-2 py-1">Patient Name</th>
+                  <th className="border px-2 py-1">Date</th>
+                  <th className="border px-2 py-1">Doctor</th>
+                  <th className="border px-2 py-1">Instructions</th>
                 </tr>
               </thead>
               <tbody>
-                {dummyPrescriptions.map((prescription, index) => (
-                  <tr
-                    key={index}
-                    className={index % 2 === 0 ? "bg-gray-100" : "bg-white"}
-                  >
-                    <td className="px-4 py-2">{prescription.name}</td>
-                    <td className="px-4 py-2">{prescription.date}</td>
-                    <td className="px-4 py-2">{prescription.type}</td>
-                    <td className="px-4 py-2">{prescription.status}</td>
+                {prescriptions.map((prescription, index) => (
+                  <tr key={index}>
+                    <td className="border px-2 py-1">{prescription.name}</td>
+                    <td className="border px-2 py-1">
+                      {prescription.dateOfPrescription}
+                    </td>
+                    <td className="border px-2 py-1">
+                      {prescription.doctorInformation}
+                    </td>
+                    <td className="border px-2 py-1">
+                      {prescription.instructions}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -410,8 +375,8 @@ const HomePage: React.FC = () => {
 
               <div className="flex gap-2">
                 <a
-                  href="#"
-                  className="flex gap-2 items-center bg-gray-50 hover:bg-gray-100 p-1 rounded block"
+                  onClick={() => setShowModal(true)}
+                  className="flex gap-2 items-center bg-gray-50 hover:bg-gray-100 p-1 rounded cursor-pointer"
                 >
                   <span className="text-[#1F4276] text-sm font-medium">
                     Write Prescription
@@ -419,8 +384,8 @@ const HomePage: React.FC = () => {
                   <img src={redirect} alt="" />
                 </a>
                 <a
-                  href="#"
-                  className="flex gap-2 items-center bg-gray-50  hover:bg-gray-100 p-1 rounded block"
+                  onClick={() => navigate("/prescriptions")}
+                  className="flex gap-2 items-center bg-gray-50  hover:bg-gray-100 p-1 rounded cursor-pointer"
                 >
                   <span className="text-[#1F4276] text-sm font-medium">
                     All Prescriptions

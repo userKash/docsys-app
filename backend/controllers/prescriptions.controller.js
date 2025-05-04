@@ -14,20 +14,45 @@ const getPrescriptions = async (req, res) => {
 const createPrescription = async (req, res) => {
   const prescription = req.body;
 
-  if (
-    !prescription.name ||
-    !prescription.age ||
-    !prescription.gender ||
-    !prescription.dateOfPrescription ||
-    !prescription.inscription ||
-    !prescription.instructions ||
-    !prescription.doctorInformation
-  ) {
-    return res.status(400).json({ success: false, message: "Fields required" });
+  // Basic field validation
+  const requiredFields = [
+    "name",
+    "age",
+    "gender",
+    "dateOfPrescription",
+    "inscription",
+    "instructions",
+    "doctorInformation",
+  ];
+
+  for (const field of requiredFields) {
+    if (!prescription[field]) {
+      return res
+        .status(400)
+        .json({ success: false, message: `Missing field: ${field}` });
+    }
   }
-  const newPrescription = new Prescription(prescription);
+
+  // Validate inscription is an array of valid medicine objects
+  if (
+    !Array.isArray(prescription.inscription) ||
+    prescription.inscription.some(
+      (med) =>
+        !med.name ||
+        !med.dosage ||
+        typeof med.frequency !== "number" ||
+        typeof med.quantity !== "number"
+    )
+  ) {
+    return res.status(400).json({
+      success: false,
+      message:
+        "Invalid inscription format. Must be an array of medicine objects.",
+    });
+  }
 
   try {
+    const newPrescription = new Prescription(prescription);
     await newPrescription.save();
     res.status(201).json({ success: true, data: newPrescription });
   } catch (error) {
