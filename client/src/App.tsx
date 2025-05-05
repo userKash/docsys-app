@@ -11,7 +11,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 function App() {
   useEffect(() => {
     axios
-      .get("https://docsys-app-sgxr.onrender.com/")
+      .get("https://docsys-app-server.onrender.com/")
       .catch((error) => console.error(error));
   }, []);
 
