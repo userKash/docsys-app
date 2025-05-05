@@ -19,7 +19,9 @@ const AllPrescriptions: React.FC = () => {
   useEffect(() => {
     const fetchPrescriptions = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/prescriptions");
+        const res = await fetch(
+          "https://docsys-app-server.onrender.com/api/prescriptions"
+        );
         const data = await res.json();
         if (res.ok) {
           setPrescriptions(data.data);
