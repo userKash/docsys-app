@@ -63,13 +63,16 @@ const CreatePrescriptionPage: React.FC = () => {
     };
 
     try {
-      const response = await fetch("http://localhost:5000/api/prescriptions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      const response = await fetch(
+        "https://docsys-app-server.onrender.com/api/prescriptions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
 
       const data = await response.json();
       if (response.ok) {
