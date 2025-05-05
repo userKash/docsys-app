@@ -199,17 +199,16 @@ const PrescriptionModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 const formatName = (fullName: string) => {
   if (!fullName) return "";
 
-  const parts = fullName.trim().split(/\s+/); // Split by spaces
+  const parts = fullName.trim().split(/\s+/);
   const filteredParts: string[] = [];
 
   parts.forEach((part, index) => {
-    const cleanPart = part.replace(/[^a-zA-Z]/g, ""); // Remove dots, commas, etc.
+    const cleanPart = part.replace(/[^a-zA-Z]/g, "");
     if (index === 0) {
-      filteredParts.push(part); // Always keep first name
+      filteredParts.push(part);
     } else if (cleanPart.length > 1) {
-      filteredParts.push(part); // Keep only real words
+      filteredParts.push(part);
     }
-    // Skip if cleanPart is 1 letter (initials)
   });
 
   return filteredParts.join(" ");
@@ -219,7 +218,7 @@ type Prescription = {
   name: string;
   dateOfPrescription: string;
   doctorInformation: string;
-  instructions: string;
+  createdAt: string;
 };
 
 const HomePage: React.FC = () => {
@@ -233,7 +232,12 @@ const HomePage: React.FC = () => {
         );
         const data = await res.json();
         if (res.ok) {
-          setPrescriptions(data.data);
+          const sortedData = data.data.sort(
+            (a: Prescription, b: Prescription) =>
+              new Date(b.dateOfPrescription).getTime() -
+              new Date(a.dateOfPrescription).getTime()
+          );
+          setPrescriptions(sortedData);
         } else {
           console.error("Fetch failed:", data.message);
         }
@@ -334,27 +338,38 @@ const HomePage: React.FC = () => {
                 <h1 className="text-sm font-medium text-[#1F4276]">View all</h1>
               </a>
             </div>
-            <table className="w-full text-sm border-collapse border">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="px-2 py-1">Patient Name</th>
-                  <th className="border px-2 py-1">Date</th>
-                  <th className="border px-2 py-1">Doctor</th>
-                  <th className="border px-2 py-1">Instructions</th>
+            <table className="w-full text-sm border-collapse  ">
+              <thead className="">
+                <tr className="border bg-gray-100">
+                  <th className="border-b px-2 py-2 text-start">
+                    Patient Name
+                  </th>
+                  <th className="border-b px-2 py-1 text-start">Date</th>
+                  <th className="border-b px-2 py-1 text-start">Time</th>
+                  <th className="border-b px-2 py-1 text-start">Doctor</th>
                 </tr>
               </thead>
               <tbody>
                 {prescriptions.map((prescription, index) => (
                   <tr key={index}>
-                    <td className="border px-2 py-1">{prescription.name}</td>
-                    <td className="border px-2 py-1">
-                      {prescription.dateOfPrescription}
+                    <td className="border-b px-2 py-3">{prescription.name}</td>
+                    <td className="border-b px-2 py-1">
+                      {new Date(
+                        prescription.dateOfPrescription
+                      ).toLocaleDateString("en-US", {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
                     </td>
-                    <td className="border px-2 py-1">
+                    <td className="border-b px-2 py-1">
+                      {new Date(prescription.createdAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </td>
+                    <td className="border-b px-2 py-1">
                       {prescription.doctorInformation}
-                    </td>
-                    <td className="border px-2 py-1">
-                      {prescription.instructions}
                     </td>
                   </tr>
                 ))}
