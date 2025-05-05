@@ -10,7 +10,9 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 
 function App() {
   useEffect(() => {
-    axios.get("http://localhost:5000/").catch((error) => console.error(error));
+    axios
+      .get("https://docsys-app-sgxr.onrender.com/")
+      .catch((error) => console.error(error));
   }, []);
 
   return (
