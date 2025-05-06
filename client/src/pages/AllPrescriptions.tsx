@@ -241,6 +241,7 @@ const AllPrescriptions: React.FC = () => {
               </div>
 
               {/* Rx and Medicine List */}
+              {/**/}
               <div className="flex">
                 <div>
                   <div className="text-3xl font-bold mr-6 text-gray-700">℞</div>
